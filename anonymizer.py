@@ -536,23 +536,61 @@ def anonymize_document(image_path: str, output_path: str, use_llm=True, ollama_m
                     is_likely_passport = True
                     print("MRZ-Zeilen erkannt: Dokument ist wahrscheinlich ein Pass oder Ausweis!")
                     
-                    if debug_mode:
+                    if debug_mode:                        
                         print(f"Gefundene MRZ-Zeilen:")
                         for idx, line in enumerate(mrz_lines):
                             print(f"  {idx+1}. {line}")
-
+                            
             print(f"{len(texts)} Textblöcke gefunden.")
             
             # Wenn es sich um einen Pass handelt, wende spezielle Passanalyse an
             if is_likely_passport:
                 print("Anwendung spezieller Algorithmen für Passanalyse...")
-              # Wir müssen nun über den Index gehen, um die passenden Boxen und Texte zu finden.
+                
+            # Wir müssen nun über den Index gehen, um die passenden Boxen und Texte zu finden.
             for i in range(len(texts)):
                 box_coordinates = boxes[i]
-                text = texts[i]
                 
-                # Schritt 1: Analysiere den erkannten Text mit spaCy
-                doc = nlp(text)
+                # Validiere die Bounding Box - Überprüfe auf ungültige oder extrem große Boxen
+                if len(box_coordinates) != 4:
+                    if debug_mode:
+                        print(f"  Überspringe ungültige Box für Textblock {i+1}")
+                    continue
+                  # Prüfe auf extrem große oder ungültige Boxen
+                x_min, y_min = min(point[0] for point in box_coordinates), min(point[1] for point in box_coordinates)
+                x_max, y_max = max(point[0] for point in box_coordinates), max(point[1] for point in box_coordinates)
+                box_width, box_height = x_max - x_min, y_max - y_min
+                
+                # Übermäßig große Boxen können Probleme verursachen
+                if box_width > img_width * 0.9 or box_height > img_height * 0.9:
+                    if debug_mode:
+                        print(f"  Überspringe zu große Box für Textblock {i+1}: {box_width}x{box_height}")
+                    continue
+                
+                text = texts[i]
+                  # Überspringe leeren oder problematischen Text
+                if not text or len(text.strip()) == 0:
+                    if debug_mode:
+                        print(f"  Überspringe leeren Textblock {i+1}")
+                    continue
+                
+                # Prüfe auf seltsame Zeichen oder extrem kurzen Text, die Probleme verursachen können
+                if len(text.strip()) < 2 or not any(c.isalnum() for c in text):
+                    if debug_mode:
+                        print(f"  Überspringe problematischen Text: '{text}'")
+                    continue
+                
+                try:
+                    # Schritt 1: Analysiere den erkannten Text mit spaCy
+                    # Wir begrenzen die Länge des Texts, um Speicherprobleme zu vermeiden
+                    text_to_process = text[:1000]  # Begrenze auf 1000 Zeichen
+                    doc = nlp(text_to_process)
+                except Exception as e:  # Fängt alle möglichen Fehler ab, nicht nur ValueError
+                    print(f"Fehler bei der Verarbeitung von Text durch spaCy: {e}")
+                    print(f"Problematischer Text: '{text}'")
+                    # Fahre ohne NLP-Analyse fort
+                    doc = None
+                    continue  # Skip this text block and move to the next one
                 
                 # Lade die Sensitivitätsregeln (Entitäten, Schlüsselwörter, Regex) aus der Konfigurationsdatei
                 sensitivity_rules = load_sensitivity_rules('sensitive_data_rules.txt')
@@ -1040,7 +1078,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Anonymisiere sensible Daten in Dokumenten')
-    parser.add_argument('--input', '-i', type=str, default=r"C:\Users\haida\Documents\Python Scripts\OCR-Paddle\Screenshot 2025-06-13 110221.png", 
+    parser.add_argument('--input', '-i', type=str, default=r"C:\Users\haida\Documents\Python Scripts\OCR-Paddle\Screenshot 2025-06-13 011733.png", 
                         help='Pfad zur Eingabedatei')
     parser.add_argument('--output', '-o', type=str, default="dokument_anonymisiert.png", 
                         help='Pfad zur Ausgabedatei')    
@@ -1076,9 +1114,6 @@ if __name__ == "__main__":
             print("Pass-/Ausweismodus aktiviert: Spezialisierte Erkennung wird verwendet")        
         if debug_mode:
             print("Debug-Modus aktiviert: Ausführliche Informationen werden angezeigt")
-          # Ausgabe der Server-URL bei Verwendung von LLM
-        if use_llm:
-            print(f"Verwende Ollama-Server-URL: {ollama_url}")
         
         # Erweiterte Parameter-Übergabe für die neuen Funktionen
         anonymize_document(
@@ -1088,8 +1123,7 @@ if __name__ == "__main__":
             ollama_model=ollama_model,
             config_file=rules_file,
             debug_mode=debug_mode,
-            is_passport=is_passport,
-            ollama_url=ollama_url
+            is_passport=is_passport
         )
 
 
