@@ -1,0 +1,75 @@
+# Sensitive Data Rules Configuration
+# Format: One rule per line
+# Types: keyword, regex, entity
+# Syntax: type:value
+
+# Entity types to detect with spaCy
+entity:PERSON
+entity:PER
+entity:ORG
+entity:LOC
+entity:GPE
+entity:FAC
+entity:DATE
+
+# Keywords to detect (case insensitive)
+keyword:patient id
+keyword:geburt
+keyword:birth
+keyword:DOI
+keyword:vorname
+keyword:nachname
+keyword:first name
+keyword:surname
+keyword:last name
+keyword:university
+keyword:publication
+keyword:citations
+keyword:profile
+keyword:author
+keyword:email
+keyword:phone
+keyword:telefon
+keyword:krankheit
+keyword:diagnose
+keyword:diagnosis
+keyword:medical record
+keyword:krankenakte
+
+# Pass/Ausweis spezifische Schlüsselwörter
+keyword:passport
+keyword:reisepass
+keyword:personalausweis
+keyword:identity card
+keyword:ausstellungsdatum
+keyword:date of issue
+keyword:authority
+keyword:behörde
+keyword:gültig bis
+keyword:valid until
+keyword:staatsangehörigkeit
+keyword:nationality
+keyword:geburtsort
+keyword:place of birth
+keyword:document no
+keyword:dokument nr
+keyword:passport no
+keyword:passnummer
+keyword:Holder's Signature
+
+
+# Regex patterns (each line is a separate regular expression)
+regex:\b[A-Z0-9]{6,10}\b
+regex:\bP\s?[0-9]{5,8}\b
+regex:\b[0-9]{3}[-][0-9]{3}[-][0-9]{3}\b
+regex:\d{1,2}[./-]\d{1,2}[./-]\d{2,4}
+regex:\b\d{4}[./-]\d{1,2}[./-]\d{1,2}\b
+regex:[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}
+regex:\b\+?[0-9]{2,4}[\s-]?[0-9]{2,4}[\s-]?[0-9]{2,9}\b
+
+# Pass/Ausweis spezifische Regex-Muster
+regex:\b[A-Z][0-9]{7}\b
+regex:\b[A-Z]{2}[0-9]{6}\b
+regex:P<[A-Z]{3}[A-Z0-9]{7,9}
+regex:[A-Z0-9<]{30,44}
+regex:\b\d{6}[FM]\d{7}\b
