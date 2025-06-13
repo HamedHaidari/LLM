@@ -166,10 +166,6 @@ For better results:
 - `extract_sensitive_values`: Finds sensitive values next to keywords
 - `get_sensitive_regions`: Identifies areas to be redacted
 
-## License
-
-[MIT License](LICENSE)
-
 ## Author
 
 - [Hamed Haidari]
